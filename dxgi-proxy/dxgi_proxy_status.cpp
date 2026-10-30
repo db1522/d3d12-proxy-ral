@@ -5,7 +5,7 @@ namespace dxgi_proxy {
 namespace {
 
 constexpr long long kWriteEveryMs = 5000;
-constexpr const char *kVersion = "1.0";
+constexpr const char *kVersion = "1.1";
 
 std::wstring exeDirectory()
 {
@@ -81,8 +81,11 @@ void Status::onAdapter(bool integrated, bool overrides_active)
 	}
 }
 
-void Status::onNonLocalQuery(bool overridden)
+void Status::onNonLocalQuery(bool overridden, bool real_was_zero)
 {
+	if(real_was_zero) {
+		++non_local_real_zero_;
+	}
 	const auto now = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - started_).count();
 	long long expected = -1;
 	const bool first = first_query_ms_.compare_exchange_strong(expected, now);
@@ -148,6 +151,7 @@ void Status::write()
 	json += std::string("  \"overridesActive\": ") + (overrides_active_ ? "true" : "false") + ",\n";
 	json += "  \"nonLocalQueries\": " + std::to_string(non_local_queries_.load()) + ",\n";
 	json += "  \"nonLocalOverridden\": " + std::to_string(non_local_overridden_.load()) + ",\n";
+	json += "  \"nonLocalRealZero\": " + std::to_string(non_local_real_zero_.load()) + ",\n";
 	json += "  \"localQueries\": " + std::to_string(local_queries_.load()) + ",\n";
 	json += "  \"descQueries\": " + std::to_string(desc_queries_.load()) + ",\n";
 	json += "  \"firstQuerySeconds\": " + seconds(first_query_ms_.load()) + ",\n";

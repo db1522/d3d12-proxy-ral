@@ -17,15 +17,21 @@ illumination, ambient occlusion and volumetric fog. The proxy reports a non-zero
   "overridesActive": true,
   "nonLocalQueries": 12,
   "nonLocalOverridden": 12,
+  "nonLocalRealZero": 12,
   "firstQuerySeconds": 4.2,
   "lastQuerySeconds": 63.1,
   "overridesStoppedAfterSeconds": null
 }
 ```
 
-`nonLocalQueries` is the key number: it counts how often the game asked for the non-local memory size, the question
-Unreal uses to decide a GPU is integrated. A game that never asks can't be changed by the fix, so tools can tell
-players, or turn the fix off by themselves. It's written on the first query, then at most every 5 seconds, and when
+`nonLocalQueries` counts how often the game asked for the non-local memory size, the question Unreal uses to decide a
+GPU is integrated. `nonLocalRealZero` (added in 1.1) counts how many of the GPU's own answers, before any override,
+were 0: that's what would have made Unreal treat the GPU as integrated and turn Lumen off. Together they tell whether a
+game needs the fix:
+
+- `nonLocalQueries` is 0: the game never asks, so the fix can't change anything.
+- `nonLocalRealZero` is 0: the game asks, but already sees a dedicated GPU, so Lumen stays on without the fix.
+- `nonLocalRealZero` is above 0: without the fix, Unreal would see an integrated GPU and switch Lumen off. It's written on the first query, then at most every 5 seconds, and when
 the game exits. Turn it off with `[status] enable=false`.
 
 **`disable_after_first_query`.** Like upstream's `disable_after`, but the countdown starts at the game's first

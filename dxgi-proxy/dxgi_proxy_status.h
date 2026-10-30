@@ -20,7 +20,9 @@ public:
 	void onAdapter(bool integrated, bool overrides_active);
 
 	// The game queried the non-local memory segment; overridden = the proxy replaced the answer.
-	void onNonLocalQuery(bool overridden);
+	// real_was_zero: the GPU's own answer, before any override, was 0. That's what makes Unreal treat a GPU as
+	// integrated and turn Lumen off, so it shows whether the game needs the fix.
+	void onNonLocalQuery(bool overridden, bool real_was_zero);
 	void onLocalQuery() noexcept { ++local_queries_; }
 	void onDescQuery() noexcept { ++desc_queries_; }
 	void onOverridesDisabled(double after_seconds);
@@ -42,6 +44,7 @@ private:
 	std::atomic<bool> overrides_active_{false};
 	std::atomic<unsigned long long> non_local_queries_{0};
 	std::atomic<unsigned long long> non_local_overridden_{0};
+	std::atomic<unsigned long long> non_local_real_zero_{0};
 	std::atomic<unsigned long long> local_queries_{0};
 	std::atomic<unsigned long long> desc_queries_{0};
 	std::atomic<long long> first_query_ms_{-1};

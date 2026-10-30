@@ -157,9 +157,12 @@ HRESULT DXGI_P_API Adapter::QueryVideoMemoryInfo(UINT index, DXGI_MEMORY_SEGMENT
 	const auto hr = get<IDXGIAdapter3>().QueryVideoMemoryInfo(index, group, out);
 	if(out && hr == S_OK && index == 0) {
 		checkTimeout();
+		// The GPU's own answer, before any override: 0 is what makes Unreal treat the GPU as integrated.
+		const bool real_was_zero = group == DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL && out->Budget == 0;
 		postprocess(group, *out);
 		if(group == DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL) {
-			Status::instance().onNonLocalQuery(!overrides_disabled && config->overrideSection().gpu_non_local_memory_size.has_value());
+			Status::instance().onNonLocalQuery(
+				!overrides_disabled && config->overrideSection().gpu_non_local_memory_size.has_value(), real_was_zero);
 		} else {
 			Status::instance().onLocalQuery();
 		}
